@@ -1,3 +1,8 @@
+import { db } from "./firebase.js";
+import {
+  collection, doc, setDoc, getDoc, getDocs, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
 // ---------- Utilities ----------
 function uid() {
   return Math.random().toString(16).slice(2) + Date.now().toString(16);
@@ -29,33 +34,29 @@ function quizKey(id) {
   return `quiz_${id}`;
 }
 
-function loadAllQuizzes() {
+const QUIZ_COLLECTION = "quizzes";
+
+async function loadAllQuizzes() {
+  const snap = await getDocs(collection(db, QUIZ_COLLECTION));
   const quizzes = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (!k || !k.startsWith("quiz_")) continue;
-    try {
-      quizzes.push(JSON.parse(localStorage.getItem(k)));
-    } catch {}
-  }
+  snap.forEach((d) => quizzes.push(d.data()));
   quizzes.sort(
     (a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0)
   );
   return quizzes;
 }
-
-function saveQuiz(quiz) {
+async function saveQuiz(quiz) {
   quiz.updatedAt = Date.now();
-  localStorage.setItem(quizKey(quiz.id), JSON.stringify(quiz));
+  if (!quiz.createdAt) quiz.createdAt = quiz.updatedAt;
+  await setDoc(doc(db, QUIZ_COLLECTION, quiz.id), quiz); // write full quiz
 }
 
-function deleteQuiz(id) {
-  localStorage.removeItem(quizKey(id));
+async function deleteQuiz(id) {
+  await deleteDoc(doc(db, QUIZ_COLLECTION, id));
 }
-
-function loadQuizById(id) {
-  const raw = localStorage.getItem(quizKey(id));
-  return raw ? JSON.parse(raw) : null;
+async function loadQuizById(id) {
+  const snap = await getDoc(doc(db, QUIZ_COLLECTION, id));
+  return snap.exists() ? snap.data() : null;
 }
 
 function escapeHtml(s) {
@@ -648,3 +649,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
