@@ -265,3 +265,63 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(110, 168, 255, 0.25);
   border-color: rgba(110, 168, 255, 0.6);
 }
+
+/* =========================
+   RESULTS - clearer feedback
+   ========================= */
+
+.reviewItem {
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.reviewItem.correct {
+  border: 1px solid rgba(61, 220, 151, 0.35);
+  background: rgba(61, 220, 151, 0.08);
+}
+
+.reviewItem.wrong {
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  background: rgba(255, 107, 107, 0.08);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  margin-right: 6px;
+}
+
+.okPill {
+  border-color: rgba(61,220,151,0.35);
+  background: rgba(61,220,151,0.12);
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.wrongPill {
+  border-color: rgba(255,107,107,0.35);
+  background: rgba(255,107,107,0.12);
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.correctPill {
+  border-color: rgba(110,168,255,0.40);
+  background: rgba(110,168,255,0.14);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.pickedPill {
+  border-color: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  font-weight: 700;
+}
