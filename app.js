@@ -79,6 +79,7 @@ function initMaker() {
   const quizTitle = el("quizTitle");
 
   const qText = el("qText");
+  const qFeedback = el("qFeedback");
   const choicesWrap = el("choicesWrap");
   const addChoiceBtn = el("addChoiceBtn");
   const saveQuestionBtn = el("saveQuestionBtn");
@@ -125,6 +126,7 @@ function initMaker() {
 
   function clearQuestionForm() {
     qText.value = "";
+    qFeedback.value = "";
     choicesWrap.innerHTML = "";
     editingQuestionId = null;
     cancelEditBtn.style.display = "none";
@@ -205,6 +207,7 @@ function initMaker() {
     editingQuestionId = qid;
     cancelEditBtn.style.display = "inline-flex";
     qText.value = q.text;
+    qFeedback.value = q.feedback || "";
 
     choicesWrap.innerHTML = "";
     q.choices.forEach((c, idx) => {
@@ -242,8 +245,8 @@ function initMaker() {
       r.querySelector('input[type="radio"]').checked
     );
     if (correctIndex < 0) throw new Error("Select a correct answer.");
-
-    return { text, choices, correctIndex };
+    const feedback = qFeedback.value.trim();
+    return { text, choices, correctIndex, feedback };
   }
 
   function renderShare() {
@@ -324,6 +327,7 @@ function initMaker() {
         q.text = data.text;
         q.choices = data.choices;
         q.correctIndex = data.correctIndex;
+        q.feedback = data.feedback || "";
       } else {
         activeQuiz.questions.push({ id: uid(), ...data });
       }
@@ -649,5 +653,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
 
 
