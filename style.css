@@ -71,21 +71,32 @@ a:hover { text-decoration: underline; }
 }
 .btn {
   border: 1px solid var(--border);
-  background: rgba(255,255,255,0.05);
+  background: var(--card2);
   color: var(--text);
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
 }
-.btn:hover { background: rgba(255,255,255,0.08); }
-.btn.primary {
-  background: rgba(110,168,255,0.18);
-  border-color: rgba(110,168,255,0.4);
+
+.btn:hover {
+  background: var(--accent-soft);
 }
+
+.btn.primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn.primary:hover {
+  background: #1d4ed8;
+}
+
 .btn.danger {
-  background: rgba(255,107,107,0.12);
-  border-color: rgba(255,107,107,0.35);
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: var(--danger);
 }
 
 .grid {
@@ -159,7 +170,15 @@ textarea { min-height: 90px; resize: vertical; }
   display: flex;
   gap: 10px;
   align-items: center;
-  margin: 8px 0;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  cursor: pointer;
+}
+
+.choice:hover {
+  background: var(--accent-soft);
 }
 
 .choice input[type="radio"] {
@@ -181,9 +200,16 @@ textarea { min-height: 90px; resize: vertical; }
   overflow: auto;
 }
 
-.ok { color: var(--ok); }
-.dangerText { color: var(--danger); }
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.dangerText {
+  color: var(--danger);
+  font-weight: 700;
+}
 
 .small { font-size: 12px; }
+
 
 
