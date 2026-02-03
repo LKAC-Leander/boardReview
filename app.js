@@ -593,7 +593,6 @@ function initResults() {
         </div>
         <div class="row tight" style="gap:8px;">
           ${statusPill}
-          ${pickedPill}
         </div>
       </div>
     
@@ -641,6 +640,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
 
 
 
