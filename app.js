@@ -559,10 +559,7 @@ function initResults() {
     const statusPill = ok
       ? `<span class="pill correctPill">✅ Correct</span>`
       : `<span class="pill wrongPill">❌ Wrong</span>`;
-    
-    const pickedPill = picked == null
-      ? `<span class="pill neutralPill">No answer</span>`
-      : `<span class="pill pickedPill">🟦 Your choice</span>`;
+
     
       const choicesHtml = q.choices.map((c, i) => {
         const isCorrect = i === q.correctIndex;
@@ -643,6 +640,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
 
 
 
