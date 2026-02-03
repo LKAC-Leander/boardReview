@@ -3,6 +3,8 @@ import {
   collection, doc, setDoc, getDoc, getDocs, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+const QUIZ_COLLECTION = "quizzes";
+
 // ---------- Utilities ----------
 function uid() {
   return Math.random().toString(16).slice(2) + Date.now().toString(16);
@@ -30,35 +32,6 @@ function base64UrlDecode(b64url) {
   return new TextDecoder().decode(bytes);
 }
 
-function quizKey(id) {
-  return `quiz_${id}`;
-}
-
-const QUIZ_COLLECTION = "quizzes";
-
-async function loadAllQuizzes() {
-  const snap = await getDocs(collection(db, QUIZ_COLLECTION));
-  const quizzes = [];
-  snap.forEach((d) => quizzes.push(d.data()));
-  quizzes.sort(
-    (a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0)
-  );
-  return quizzes;
-}
-async function saveQuiz(quiz) {
-  quiz.updatedAt = Date.now();
-  if (!quiz.createdAt) quiz.createdAt = quiz.updatedAt;
-  await setDoc(doc(db, QUIZ_COLLECTION, quiz.id), quiz); // write full quiz
-}
-
-async function deleteQuiz(id) {
-  await deleteDoc(doc(db, QUIZ_COLLECTION, id));
-}
-async function loadQuizById(id) {
-  const snap = await getDoc(doc(db, QUIZ_COLLECTION, id));
-  return snap.exists() ? snap.data() : null;
-}
-
 function escapeHtml(s) {
   return (s ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;",
@@ -69,8 +42,32 @@ function escapeHtml(s) {
   }[c]));
 }
 
+// ---------- Firestore storage ----------
+async function loadAllQuizzes() {
+  const snap = await getDocs(collection(db, QUIZ_COLLECTION));
+  const quizzes = [];
+  snap.forEach((d) => quizzes.push(d.data()));
+  quizzes.sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
+  return quizzes;
+}
+
+async function saveQuiz(quiz) {
+  quiz.updatedAt = Date.now();
+  if (!quiz.createdAt) quiz.createdAt = quiz.updatedAt;
+  await setDoc(doc(db, QUIZ_COLLECTION, quiz.id), quiz);
+}
+
+async function deleteQuiz(id) {
+  await deleteDoc(doc(db, QUIZ_COLLECTION, id));
+}
+
+async function loadQuizById(id) {
+  const snap = await getDoc(doc(db, QUIZ_COLLECTION, id));
+  return snap.exists() ? snap.data() : null;
+}
+
 // ---------- Maker Page ----------
-function initMaker() {
+async function initMaker() {
   const el = (id) => document.getElementById(id);
 
   const quizSelect = el("quizSelect");
@@ -79,7 +76,7 @@ function initMaker() {
   const quizTitle = el("quizTitle");
 
   const qText = el("qText");
-  const qFeedback = el("qFeedback");
+  const qFeedback = el("qFeedback"); // must exist in maker.html
   const choicesWrap = el("choicesWrap");
   const addChoiceBtn = el("addChoiceBtn");
   const saveQuestionBtn = el("saveQuestionBtn");
@@ -109,9 +106,7 @@ function initMaker() {
 
     const opt0 = document.createElement("option");
     opt0.value = "";
-    opt0.textContent = quizzes.length
-      ? "Select a saved quiz…"
-      : "No quizzes yet — click New Quiz";
+    opt0.textContent = quizzes.length ? "Select a saved quiz…" : "No quizzes yet — click New Quiz";
     quizSelect.appendChild(opt0);
 
     quizzes.forEach((q) => {
@@ -126,7 +121,7 @@ function initMaker() {
 
   function clearQuestionForm() {
     qText.value = "";
-    qFeedback.value = "";
+    if (qFeedback) qFeedback.value = "";
     choicesWrap.innerHTML = "";
     editingQuestionId = null;
     cancelEditBtn.style.display = "none";
@@ -187,7 +182,7 @@ function initMaker() {
 
       editBtn.onclick = () => startEditQuestion(q.id);
 
-      delBtn.onclick = () => {
+      delBtn.onclick = async () => {
         if (!confirm("Delete this question?")) return;
         activeQuiz.questions = activeQuiz.questions.filter((x) => x.id !== q.id);
         await saveQuiz(activeQuiz);
@@ -207,7 +202,7 @@ function initMaker() {
     editingQuestionId = qid;
     cancelEditBtn.style.display = "inline-flex";
     qText.value = q.text;
-    qFeedback.value = q.feedback || "";
+    if (qFeedback) qFeedback.value = q.feedback || "";
 
     choicesWrap.innerHTML = "";
     q.choices.forEach((c, idx) => {
@@ -241,11 +236,10 @@ function initMaker() {
     const choices = rows.map((r) => r.querySelector("input.input").value.trim());
     if (choices.some((c) => !c)) throw new Error("All choices must have text.");
 
-    const correctIndex = rows.findIndex((r) =>
-      r.querySelector('input[type="radio"]').checked
-    );
+    const correctIndex = rows.findIndex((r) => r.querySelector('input[type="radio"]').checked);
     if (correctIndex < 0) throw new Error("Select a correct answer.");
-    const feedback = qFeedback.value.trim();
+
+    const feedback = qFeedback ? qFeedback.value.trim() : "";
     return { text, choices, correctIndex, feedback };
   }
 
@@ -270,7 +264,8 @@ function initMaker() {
     shareLinkEl.textContent = url.toString();
   }
 
-  newQuizBtn.onclick = () => {
+  // Events
+  newQuizBtn.onclick = async () => {
     const q = {
       id: uid(),
       title: "Untitled Quiz",
@@ -278,13 +273,13 @@ function initMaker() {
       updatedAt: Date.now(),
       questions: []
     };
-    saveQuiz(q);
+    await saveQuiz(q);
     await refreshQuizDropdown(q.id);
     setActiveQuiz(q);
     clearQuestionForm();
   };
 
-  quizSelect.onchange = () => {
+  quizSelect.onchange = async () => {
     const id = quizSelect.value;
     if (!id) {
       activeQuiz = null;
@@ -295,13 +290,14 @@ function initMaker() {
       openTakeBtn.disabled = true;
       return;
     }
-    const q = loadQuizById(id);
+
+    const q = await loadQuizById(id);
     if (!q) return;
     setActiveQuiz(q);
     clearQuestionForm();
   };
 
-  quizTitle.oninput = () => {
+  quizTitle.oninput = async () => {
     if (!activeQuiz) return;
     activeQuiz.title = quizTitle.value.trim() || "Untitled Quiz";
     await saveQuiz(activeQuiz);
@@ -310,10 +306,9 @@ function initMaker() {
   };
 
   addChoiceBtn.onclick = () => addChoice("");
-
   cancelEditBtn.onclick = () => clearQuestionForm();
 
-  saveQuestionBtn.onclick = () => {
+  saveQuestionBtn.onclick = async () => {
     if (!activeQuiz) {
       alert("Create or select a quiz first.");
       return;
@@ -341,12 +336,13 @@ function initMaker() {
     }
   };
 
-  delQuizBtn.onclick = () => {
+  delQuizBtn.onclick = async () => {
     if (!activeQuiz) return;
     if (!confirm("Delete this entire quiz?")) return;
 
-    deleteQuiz(activeQuiz.id);
+    await deleteQuiz(activeQuiz.id);
     activeQuiz = null;
+
     await refreshQuizDropdown();
     quizTitle.value = "";
     questionsList.innerHTML = `<div class="muted">Select a quiz or create a new one.</div>`;
@@ -371,6 +367,7 @@ function initMaker() {
     window.location.href = `take.html?id=${encodeURIComponent(activeQuiz.id)}`;
   };
 
+  // Initial
   await refreshQuizDropdown();
   delQuizBtn.disabled = true;
   openTakeBtn.disabled = true;
@@ -380,7 +377,7 @@ function initMaker() {
 }
 
 // ---------- Take Page ----------
-function initTake() {
+async function initTake() {
   const el = (id) => document.getElementById(id);
 
   const titleEl = el("takeTitle");
@@ -409,7 +406,7 @@ function initTake() {
     if (idParam) {
       const q = await loadQuizById(idParam);
       if (!q) {
-        alert("Quiz not found in this browser.");
+        alert("Quiz not found.");
         return;
       }
       quiz = q;
@@ -420,8 +417,8 @@ function initTake() {
     quiz = null;
   }
 
-  function renderQuizPicker() {
-    const all = loadAllQuizzes();
+  async function renderQuizPicker() {
+    const all = await loadAllQuizzes();
     titleEl.textContent = "Take a Quiz";
     metaEl.innerHTML = `<span class="badge">Pick a saved quiz</span>`;
     formEl.innerHTML = "";
@@ -458,12 +455,12 @@ function initTake() {
     submitBtn.style.display = "none";
   }
 
-  function renderQuiz() {
+  async function renderQuiz() {
     if (!quiz) return renderQuizPicker();
 
     titleEl.textContent = quiz.title || "Untitled Quiz";
     metaEl.innerHTML = `
-      <span class="badge">${mode === "shared" ? "Shared quiz" : "Local quiz"}</span>
+      <span class="badge">${mode === "shared" ? "Shared quiz" : "Online quiz"}</span>
       <span class="badge">${quiz.questions.length} question(s)</span>
     `;
 
@@ -479,16 +476,12 @@ function initTake() {
       const card = document.createElement("div");
       card.className = "card";
 
-      const choicesHtml = q.choices
-        .map(
-          (c, i) => `
-          <label class="choice">
-            <input type="radio" name="q_${q.id}" value="${i}" required />
-            <span>${escapeHtml(c)}</span>
-          </label>
-        `
-        )
-        .join("");
+      const choicesHtml = q.choices.map((c, i) => `
+        <label class="choice">
+          <input type="radio" name="q_${q.id}" value="${i}" required />
+          <span>${escapeHtml(c)}</span>
+        </label>
+      `).join("");
 
       card.innerHTML = `
         <h2>Q${idx + 1}</h2>
@@ -523,7 +516,7 @@ function initTake() {
   }
 
   await loadQuiz();
-  renderQuiz();
+  await renderQuiz();
 
   submitBtn.onclick = () => {
     if (!quiz) return;
@@ -541,7 +534,7 @@ function initTake() {
 }
 
 // ---------- Results Page ----------
-asynch function initResults() {
+function initResults() {
   const el = (id) => document.getElementById(id);
   const titleEl = el("resTitle");
   const scoreEl = el("scoreLine");
@@ -581,28 +574,26 @@ asynch function initResults() {
       ? `<span class="pill correctPill">✅ Correct</span>`
       : `<span class="pill wrongPill">❌ Wrong</span>`;
 
-    const choicesHtml = q.choices
-      .map((c, i) => {
-        let cls = "choiceRow";
-        let mark = "⬜";
+    const choicesHtml = q.choices.map((c, i) => {
+      let cls = "choiceRow";
+      let mark = "⬜";
 
-        if (i === q.correctIndex) {
-          cls += " correct";
-          mark = "✅";
-        } else if (picked === i) {
-          cls += " pickedWrong";
-          mark = "❌";
-        }
+      if (i === q.correctIndex) {
+        cls += " correct";
+        mark = "✅";
+      } else if (picked === i) {
+        cls += " pickedWrong";
+        mark = "❌";
+      }
 
-        return `
-          <div class="${cls}">
-            <div class="choiceMark">${mark}</div>
-            <div class="choiceText">${escapeHtml(c)}</div>
-          </div>
-        `;
-      })
-      .join("");
-    
+      return `
+        <div class="${cls}">
+          <div class="choiceMark">${mark}</div>
+          <div class="choiceText">${escapeHtml(c)}</div>
+        </div>
+      `;
+    }).join("");
+
     const feedbackHtml = (q.feedback && q.feedback.trim())
       ? `
         <div class="feedbackBox">
@@ -611,6 +602,7 @@ asynch function initResults() {
         </div>
       `
       : "";
+
     item.innerHTML = `
       <div class="row tight" style="justify-content: space-between; gap:10px; align-items:flex-start;">
         <div style="flex:1;">
@@ -624,9 +616,10 @@ asynch function initResults() {
       <div class="choiceList">
         ${choicesHtml}
       </div>
-        ${feedbackHtml}
+
+      ${feedbackHtml}
     `;
-    
+
     reviewEl.appendChild(item);
   });
 
@@ -638,9 +631,13 @@ asynch function initResults() {
 // ---------- Boot ----------
 document.addEventListener("DOMContentLoaded", () => {
   const page = document.body.dataset.page;
-  if (page === "maker") initMaker();
-  if (page === "take") initTake();
-  if (page === "results") await initResults();
+
+  // If any async init throws, show it in console clearly
+  (async () => {
+    if (page === "maker") await initMaker();
+    if (page === "take") await initTake();
+    if (page === "results") initResults();
+  })().catch((err) => console.error("Init error:", err));
 });
 
 // =========================
@@ -662,8 +659,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
-
-
-
-
-
