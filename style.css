@@ -1,14 +1,25 @@
 :root {
-  --bg: #0b1220;
-  --card: rgba(255,255,255,0.06);
-  --card2: rgba(255,255,255,0.09);
-  --text: #e8edf7;
-  --muted: rgba(232,237,247,0.7);
-  --border: rgba(255,255,255,0.12);
-  --accent: #6ea8ff;
-  --danger: #ff6b6b;
-  --ok: #3ddc97;
+  /* Backgrounds */
+  --bg: #f4f7fb;
+  --card: #ffffff;
+  --card2: #f1f5f9;
+
+  /* Text */
+  --text: #0f172a;
+  --muted: #475569;
+
+  /* Borders */
+  --border: #e2e8f0;
+
+  /* Accents */
+  --accent: #2563eb;     /* calm blue */
+  --accent-soft: #dbeafe;
+
+  /* Status */
+  --ok: #16a34a;         /* green */
+  --danger: #dc2626;     /* red */
 }
+
 
 * { box-sizing: border-box; }
 body {
@@ -176,3 +187,4 @@ textarea { min-height: 90px; resize: vertical; }
 .dangerText { color: var(--danger); }
 
 .small { font-size: 12px; }
+
