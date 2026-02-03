@@ -556,27 +556,58 @@ function initResults() {
     const item = document.createElement("div");
     item.className = `item reviewItem ${ok ? "correct" : "wrong"}`;
     
+    const statusPill = ok
+      ? `<span class="pill correctPill">✅ Correct</span>`
+      : `<span class="pill wrongPill">❌ Wrong</span>`;
+    
+    const pickedPill = picked == null
+      ? `<span class="pill neutralPill">No answer</span>`
+      : `<span class="pill pickedPill">🟦 Your choice</span>`;
+    
+    const choicesHtml = q.choices.map((c, i) => {
+      const isCorrect = i === q.correctIndex;
+      const isPicked = picked === i;
+    
+      let cls = "choiceRow";
+      let mark = "";
+    
+      if (isPicked && isCorrect) {
+        cls += " pickedCorrect";
+        mark = "🟦";
+      } else if (isPicked && !isCorrect) {
+        cls += " pickedWrong";
+        mark = "❌";
+      } else if (!isPicked && isCorrect) {
+        cls += " correct";
+        mark = "✅";
+      } else {
+        mark = "⬜";
+      }
+    
+      return `
+        <div class="${cls}">
+          <div class="choiceMark">${mark}</div>
+          <div class="choiceText">${escapeHtml(c)}</div>
+        </div>
+      `;
+    }).join("");
+    
     item.innerHTML = `
       <div class="row tight" style="justify-content: space-between; gap:10px; align-items:flex-start;">
         <div style="flex:1;">
           <div><strong>Q${idx + 1}.</strong> ${escapeHtml(q.text)}</div>
         </div>
-        <div class="pill ${ok ? "okPill" : "wrongPill"}">${ok ? "Correct" : "Wrong"}</div>
+        <div class="row tight" style="gap:8px;">
+          ${statusPill}
+          ${pickedPill}
+        </div>
       </div>
     
-      <div style="margin-top:10px;">
-        <div class="small muted">
-          <span class="pill pickedPill">Your answer</span>
-          <span class="${ok ? "ok" : "dangerText"}">${escapeHtml(pickedText)}</span>
-        </div>
-    
-        <div class="small muted" style="margin-top:6px;">
-          <span class="pill correctPill">Correct answer</span>
-          <span class="ok">${escapeHtml(correctText)}</span>
-        </div>
+      <div class="choiceList">
+        ${choicesHtml}
       </div>
     `;
-
+    
     reviewEl.appendChild(item);
   });
 
@@ -616,4 +647,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
 
