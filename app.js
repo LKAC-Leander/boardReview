@@ -602,7 +602,15 @@ function initResults() {
         `;
       })
       .join("");
-
+    
+    const feedbackHtml = (q.feedback && q.feedback.trim())
+      ? `
+        <div class="feedbackBox">
+          <div class="feedbackLabel">Feedback</div>
+          <div class="feedbackText">${escapeHtml(q.feedback)}</div>
+        </div>
+      `
+      : "";
     item.innerHTML = `
       <div class="row tight" style="justify-content: space-between; gap:10px; align-items:flex-start;">
         <div style="flex:1;">
@@ -616,8 +624,9 @@ function initResults() {
       <div class="choiceList">
         ${choicesHtml}
       </div>
+        ${feedbackHtml}
     `;
-
+    
     reviewEl.appendChild(item);
   });
 
@@ -653,6 +662,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
 
 
 
