@@ -541,7 +541,7 @@ function initTake() {
 }
 
 // ---------- Results Page ----------
-function initResults() {
+asyncg function initResults() {
   const el = (id) => document.getElementById(id);
   const titleEl = el("resTitle");
   const scoreEl = el("scoreLine");
@@ -640,7 +640,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const page = document.body.dataset.page;
   if (page === "maker") initMaker();
   if (page === "take") initTake();
-  if (page === "results") initResults();
+  if (page === "results") await initResults();
 });
 
 // =========================
@@ -662,6 +662,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
 
 
 
