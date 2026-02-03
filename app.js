@@ -564,33 +564,29 @@ function initResults() {
       ? `<span class="pill neutralPill">No answer</span>`
       : `<span class="pill pickedPill">🟦 Your choice</span>`;
     
-    const choicesHtml = q.choices.map((c, i) => {
-      const isCorrect = i === q.correctIndex;
-      const isPicked = picked === i;
-    
-      let cls = "choiceRow";
-      let mark = "";
-    
-      if (isPicked && isCorrect) {
-        cls += " pickedCorrect";
-        mark = "🟦";
-      } else if (isPicked && !isCorrect) {
-        cls += " pickedWrong";
-        mark = "❌";
-      } else if (!isPicked && isCorrect) {
-        cls += " correct";
-        mark = "✅";
-      } else {
-        mark = "⬜";
-      }
-    
-      return `
-        <div class="${cls}">
-          <div class="choiceMark">${mark}</div>
-          <div class="choiceText">${escapeHtml(c)}</div>
-        </div>
-      `;
-    }).join("");
+      const choicesHtml = q.choices.map((c, i) => {
+        const isCorrect = i === q.correctIndex;
+        const isPicked = picked === i;
+      
+        let cls = "choiceRow";
+        let mark = "☐";
+      
+        if (isCorrect) {
+          cls += " correct";
+          mark = "✅";
+        } 
+        else if (isPicked && !isCorrect) {
+          cls += " pickedWrong";
+          mark = "❌";
+        }
+      
+        return `
+          <div class="${cls}">
+            <div class="choiceMark">${mark}</div>
+            <div class="choiceText">${escapeHtml(c)}</div>
+          </div>
+        `;
+      }).join("");
     
     item.innerHTML = `
       <div class="row tight" style="justify-content: space-between; gap:10px; align-items:flex-start;">
@@ -647,5 +643,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
 
 
