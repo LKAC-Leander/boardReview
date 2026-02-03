@@ -102,8 +102,8 @@ function initMaker() {
     openTakeBtn.disabled = false;
   }
 
-  function refreshQuizDropdown(activeId = null) {
-    const quizzes = loadAllQuizzes();
+  async function refreshQuizDropdown(activeId = null) {
+    const quizzes = await loadAllQuizzes();
     quizSelect.innerHTML = "";
 
     const opt0 = document.createElement("option");
@@ -188,7 +188,7 @@ function initMaker() {
       delBtn.onclick = () => {
         if (!confirm("Delete this question?")) return;
         activeQuiz.questions = activeQuiz.questions.filter((x) => x.id !== q.id);
-        saveQuiz(activeQuiz);
+        await saveQuiz(activeQuiz);
         renderQuestions();
         renderShare();
         if (editingQuestionId === q.id) clearQuestionForm();
@@ -276,7 +276,7 @@ function initMaker() {
       questions: []
     };
     saveQuiz(q);
-    refreshQuizDropdown(q.id);
+    await refreshQuizDropdown(q.id);
     setActiveQuiz(q);
     clearQuestionForm();
   };
@@ -301,8 +301,8 @@ function initMaker() {
   quizTitle.oninput = () => {
     if (!activeQuiz) return;
     activeQuiz.title = quizTitle.value.trim() || "Untitled Quiz";
-    saveQuiz(activeQuiz);
-    refreshQuizDropdown(activeQuiz.id);
+    await saveQuiz(activeQuiz);
+    await refreshQuizDropdown(activeQuiz.id);
     renderShare();
   };
 
@@ -328,7 +328,7 @@ function initMaker() {
         activeQuiz.questions.push({ id: uid(), ...data });
       }
 
-      saveQuiz(activeQuiz);
+      await saveQuiz(activeQuiz);
       renderQuestions();
       renderShare();
       clearQuestionForm();
@@ -343,7 +343,7 @@ function initMaker() {
 
     deleteQuiz(activeQuiz.id);
     activeQuiz = null;
-    refreshQuizDropdown();
+    await refreshQuizDropdown();
     quizTitle.value = "";
     questionsList.innerHTML = `<div class="muted">Select a quiz or create a new one.</div>`;
     shareBox.style.display = "none";
@@ -367,7 +367,7 @@ function initMaker() {
     window.location.href = `take.html?id=${encodeURIComponent(activeQuiz.id)}`;
   };
 
-  refreshQuizDropdown();
+  await refreshQuizDropdown();
   delQuizBtn.disabled = true;
   openTakeBtn.disabled = true;
   cancelEditBtn.style.display = "none";
@@ -387,7 +387,7 @@ function initTake() {
   let quiz = null;
   let mode = "local"; // local | shared
 
-  function loadQuiz() {
+  async function loadQuiz() {
     const dataParam = qs("data");
     const idParam = qs("id");
 
@@ -403,7 +403,7 @@ function initTake() {
     }
 
     if (idParam) {
-      const q = loadQuizById(idParam);
+      const q = await loadQuizById(idParam);
       if (!q) {
         alert("Quiz not found in this browser.");
         return;
@@ -518,7 +518,7 @@ function initTake() {
     };
   }
 
-  loadQuiz();
+  await loadQuiz();
   renderQuiz();
 
   submitBtn.onclick = () => {
@@ -649,4 +649,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
 
