@@ -554,16 +554,29 @@ function initResults() {
     const ok = picked === q.correctIndex;
 
     const item = document.createElement("div");
-    item.className = "item";
+    item.className = `item reviewItem ${ok ? "correct" : "wrong"}`;
+    
     item.innerHTML = `
-      <div><strong>Q${idx + 1}.</strong> ${escapeHtml(q.text)}</div>
-      <div class="small muted" style="margin-top:6px;">
-        Your answer: <span class="${ok ? "ok" : "dangerText"}">${escapeHtml(pickedText)}</span>
+      <div class="row tight" style="justify-content: space-between; gap:10px; align-items:flex-start;">
+        <div style="flex:1;">
+          <div><strong>Q${idx + 1}.</strong> ${escapeHtml(q.text)}</div>
+        </div>
+        <div class="pill ${ok ? "okPill" : "wrongPill"}">${ok ? "Correct" : "Wrong"}</div>
       </div>
-      <div class="small muted">
-        Correct answer: <span class="ok">${escapeHtml(correctText)}</span>
+    
+      <div style="margin-top:10px;">
+        <div class="small muted">
+          <span class="pill pickedPill">Your answer</span>
+          <span class="${ok ? "ok" : "dangerText"}">${escapeHtml(pickedText)}</span>
+        </div>
+    
+        <div class="small muted" style="margin-top:6px;">
+          <span class="pill correctPill">Correct answer</span>
+          <span class="ok">${escapeHtml(correctText)}</span>
+        </div>
       </div>
     `;
+
     reviewEl.appendChild(item);
   });
 
@@ -603,3 +616,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
