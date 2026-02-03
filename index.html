@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple Quiz Site</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <h1>Simple Quiz Site</h1>
+      </div>
+      <div class="nav">
+        <a class="btn primary" href="maker.html">Quiz Maker</a>
+        <a class="btn" href="take.html">Take Quiz</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Welcome</h2>
+      <p class="muted">
+        This is a simple offline-friendly quiz website. Create quizzes on the Quiz Maker page,
+        then share a link so someone else can take the quiz on their device.
+      </p>
+      <div class="row tight" style="gap:10px;">
+        <a class="btn primary" href="maker.html">Create / Edit Quizzes</a>
+        <a class="btn" href="take.html">Take a Quiz</a>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h2>How sharing works</h2>
+      <p class="muted">
+        The Quiz Maker generates a link that contains the quiz data. Anyone opening it goes straight
+        to the quiz-taking page, even if they don’t have your localStorage.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

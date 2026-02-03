@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Take Quiz</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="take">
+  <div class="container">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <h1>Take Quiz</h1>
+      </div>
+      <div class="nav">
+        <a class="btn" href="index.html">Home</a>
+        <a class="btn" href="maker.html">Quiz Maker</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 id="takeTitle">Take a Quiz</h2>
+      <div id="takeMeta" class="row tight" style="gap:8px;"></div>
+      <div class="hr"></div>
+
+      <form id="takeForm" class="grid"></form>
+
+      <div class="hr"></div>
+
+      <button id="submitBtn" class="btn primary" type="button">Submit & See Results</button>
+      <div class="muted small" style="margin-top:10px;">
+        Tip: If you opened a shared link, it loads automatically.
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quiz Maker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="maker">
+  <div class="container">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <h1>Quiz Maker</h1>
+      </div>
+      <div class="nav">
+        <a class="btn" href="index.html">Home</a>
+        <a class="btn" href="take.html">Take Quiz</a>
+      </div>
+    </div>
+
+    <div class="grid two">
+      <!-- Left: Question editor -->
+      <div class="card">
+        <h2>Build your quiz</h2>
+        <div class="row">
+          <select id="quizSelect" class="input"></select>
+          <button id="newQuizBtn" class="btn primary" type="button">New Quiz</button>
+          <button id="delQuizBtn" class="btn danger" type="button">Delete Quiz</button>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label class="small muted">Quiz Title</label>
+          <input id="quizTitle" class="input" placeholder="e.g., Math Quiz" />
+        </div>
+
+        <div class="hr"></div>
+
+        <h2>Add / Edit Question</h2>
+        <label class="small muted">Question</label>
+        <textarea id="qText" class="input" placeholder="Type your question here..."></textarea>
+
+        <div class="hr"></div>
+
+        <div class="row tight" style="justify-content: space-between;">
+          <div class="muted small">Choices (select the correct one)</div>
+          <button id="addChoiceBtn" class="btn" type="button">Add Choice</button>
+        </div>
+
+        <div id="choicesWrap"></div>
+
+        <div class="hr"></div>
+
+        <div class="row tight" style="gap:10px;">
+          <button id="saveQuestionBtn" class="btn primary" type="button">Save Question</button>
+          <button id="cancelEditBtn" class="btn" type="button">Cancel Edit</button>
+        </div>
+
+        <div class="hr"></div>
+
+        <div id="shareBox" style="display:none;">
+          <h2>Share quiz link</h2>
+          <div class="kv">
+            <code id="shareLink"></code>
+            <div class="row tight" style="gap:8px;">
+              <button id="copyShareBtn" class="btn" type="button">Copy</button>
+              <button id="openTakeBtn" class="btn" type="button">Open Take Page</button>
+            </div>
+          </div>
+          <div class="muted small" style="margin-top:8px;">
+            Send this link to someone else so they can take your quiz.
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Questions list -->
+      <div class="card">
+        <h2>Questions</h2>
+        <div id="questionsList" class="list"></div>
+        <div class="hr"></div>
+        <div class="muted small">
+          ✔ Edit/Delete questions here.  
+          ✔ Quizzes are saved in your browser (localStorage).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
