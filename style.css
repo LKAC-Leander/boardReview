@@ -267,7 +267,7 @@ textarea:focus {
 }
 
 /* =========================
-   RESULTS - clearer feedback
+   RESULTS REVIEW
    ========================= */
 
 .reviewItem {
@@ -277,12 +277,12 @@ textarea:focus {
 
 .reviewItem.correct {
   border: 1px solid rgba(61, 220, 151, 0.35);
-  background: rgba(61, 220, 151, 0.08);
+  background: rgba(61, 220, 151, 0.07);
 }
 
 .reviewItem.wrong {
   border: 1px solid rgba(255, 107, 107, 0.35);
-  background: rgba(255, 107, 107, 0.08);
+  background: rgba(255, 107, 107, 0.07);
 }
 
 .pill {
@@ -296,32 +296,77 @@ textarea:focus {
   background: rgba(255,255,255,0.05);
   color: var(--text);
   margin-right: 6px;
+  font-weight: 700;
 }
 
-.okPill {
+.correctPill {
   border-color: rgba(61,220,151,0.35);
   background: rgba(61,220,151,0.12);
   color: var(--ok);
-  font-weight: 700;
+}
+
+.pickedPill {
+  border-color: rgba(110,168,255,0.45);
+  background: rgba(110,168,255,0.14);
 }
 
 .wrongPill {
   border-color: rgba(255,107,107,0.35);
   background: rgba(255,107,107,0.12);
   color: var(--danger);
-  font-weight: 700;
 }
 
-.correctPill {
-  border-color: rgba(110,168,255,0.40);
-  background: rgba(110,168,255,0.14);
-  color: var(--text);
-  font-weight: 700;
-}
-
-.pickedPill {
+.neutralPill {
   border-color: rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.08);
-  color: var(--text);
-  font-weight: 700;
+  background: rgba(255,255,255,0.06);
+  color: var(--muted);
 }
+
+.choiceList {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.choiceRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+}
+
+.choiceMark {
+  width: 28px;
+  flex: 0 0 28px;
+  text-align: center;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.choiceText {
+  flex: 1;
+  line-height: 1.35;
+}
+
+/* Correct answer */
+.choiceRow.correct {
+  border-color: rgba(61,220,151,0.35);
+  background: rgba(61,220,151,0.10);
+}
+
+/* Your selection AND it is correct */
+.choiceRow.pickedCorrect {
+  border-color: rgba(110,168,255,0.55);
+  background: rgba(110,168,255,0.16);
+}
+
+/* Your selection AND it is wrong */
+.choiceRow.pickedWrong {
+  border-color: rgba(255,107,107,0.40);
+  background: rgba(255,107,107,0.14);
+}
+
