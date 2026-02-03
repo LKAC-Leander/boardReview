@@ -2,7 +2,7 @@
    THEME VARIABLES
    ========================= */
 
-/* DARK (Original) */
+/* DARK (Original) - default */
 :root {
   --bg: #0b1220;
   --card: rgba(255,255,255,0.06);
@@ -30,7 +30,12 @@ body[data-theme="light"] {
   --danger: #dc2626;
 }
 
+/* Make native form controls follow theme */
+body:not([data-theme="light"]) { color-scheme: dark; }
+body[data-theme="light"] { color-scheme: light; }
+
 * { box-sizing: border-box; }
+
 body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -78,6 +83,7 @@ a:hover { text-decoration: underline; }
   flex-wrap: wrap;
   justify-content: flex-end;
 }
+
 .btn {
   border: 1px solid var(--border);
   background: var(--card2);
@@ -87,7 +93,6 @@ a:hover { text-decoration: underline; }
   cursor: pointer;
   font-weight: 600;
 }
-
 .btn:hover {
   background: var(--accent-soft);
 }
@@ -97,15 +102,22 @@ a:hover { text-decoration: underline; }
   color: white;
   border-color: var(--accent);
 }
-
 .btn.primary:hover {
   background: #1d4ed8;
 }
 
+/* Default danger (good for light mode) */
 .btn.danger {
   background: #fee2e2;
   border-color: #fecaca;
   color: var(--danger);
+}
+
+/* Danger button adjusted for dark mode */
+body:not([data-theme="light"]) .btn.danger {
+  background: rgba(255,107,107,0.12);
+  border-color: rgba(255,107,107,0.35);
+  color: #ff6b6b;
 }
 
 .grid {
@@ -144,6 +156,7 @@ a:hover { text-decoration: underline; }
   border-radius: 12px;
   outline: none;
 }
+
 textarea { min-height: 90px; resize: vertical; }
 
 .hr {
@@ -185,11 +198,9 @@ textarea { min-height: 90px; resize: vertical; }
   background: var(--card2);
   cursor: pointer;
 }
-
 .choice:hover {
   background: var(--accent-soft);
 }
-
 .choice input[type="radio"] {
   transform: translateY(1px);
 }
@@ -209,6 +220,8 @@ textarea { min-height: 90px; resize: vertical; }
   overflow: auto;
 }
 
+/* Fixed: missing selector in your file */
+.ok {
   color: var(--ok);
   font-weight: 700;
 }
@@ -224,14 +237,9 @@ textarea { min-height: 90px; resize: vertical; }
    DARK THEME DROPDOWN FIX
    ========================= */
 
-/* Tell browser this page uses dark UI */
-body:not([data-theme="light"]) {
-  color-scheme: dark;
-}
-
-/* Closed select field */
+/* Closed select field - solid background for better dropdown contrast */
 body:not([data-theme="light"]) select {
-  background-color: rgba(255, 255, 255, 0.09);
+  background-color: #111a2e;
   color: var(--text);
   border-color: rgba(255, 255, 255, 0.16);
 }
@@ -239,22 +247,21 @@ body:not([data-theme="light"]) select {
 /* Open dropdown list (options) */
 body:not([data-theme="light"]) select option,
 body:not([data-theme="light"]) select optgroup {
-  background-color: #111a2e;   /* darker than card, lighter than bg */
+  background-color: #111a2e;
   color: #e8edf7;
 }
 
-/* Hovered / selected option (supported browsers) */
-body:not([data-theme="light"]) select option:checked,
-body:not([data-theme="light"]) select option:hover {
+/* Selected option (supported browsers) */
+body:not([data-theme="light"]) select option:checked {
   background-color: rgba(110, 168, 255, 0.25);
   color: #ffffff;
 }
 
 /* Focus outline for accessibility */
-body:not([data-theme="light"]) select:focus {
+body:not([data-theme="light"]) select:focus,
+.input:focus,
+textarea:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(110, 168, 255, 0.25);
   border-color: rgba(110, 168, 255, 0.6);
 }
-
-
