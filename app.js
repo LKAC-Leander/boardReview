@@ -9,22 +9,25 @@ function qs(name) {
 }
 
 function base64UrlEncode(str) {
-  // UTF-8 safe
   const utf8 = new TextEncoder().encode(str);
   let bin = "";
-  utf8.forEach(b => bin += String.fromCharCode(b));
+  utf8.forEach((b) => (bin += String.fromCharCode(b)));
   const b64 = btoa(bin);
   return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 function base64UrlDecode(b64url) {
-  const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((b64url.length + 3) % 4);
+  const b64 =
+    b64url.replace(/-/g, "+").replace(/_/g, "/") +
+    "===".slice((b64url.length + 3) % 4);
   const bin = atob(b64);
-  const bytes = new Uint8Array([...bin].map(ch => ch.charCodeAt(0)));
+  const bytes = new Uint8Array([...bin].map((ch) => ch.charCodeAt(0)));
   return new TextDecoder().decode(bytes);
 }
 
-function quizKey(id) { return `quiz_${id}`; }
+function quizKey(id) {
+  return `quiz_${id}`;
+}
 
 function loadAllQuizzes() {
   const quizzes = [];
@@ -35,7 +38,9 @@ function loadAllQuizzes() {
       quizzes.push(JSON.parse(localStorage.getItem(k)));
     } catch {}
   }
-  quizzes.sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
+  quizzes.sort(
+    (a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0)
+  );
   return quizzes;
 }
 
@@ -51,6 +56,16 @@ function deleteQuiz(id) {
 function loadQuizById(id) {
   const raw = localStorage.getItem(quizKey(id));
   return raw ? JSON.parse(raw) : null;
+}
+
+function escapeHtml(s) {
+  return (s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[c]));
 }
 
 // ---------- Maker Page ----------
@@ -89,15 +104,18 @@ function initMaker() {
   function refreshQuizDropdown(activeId = null) {
     const quizzes = loadAllQuizzes();
     quizSelect.innerHTML = "";
+
     const opt0 = document.createElement("option");
     opt0.value = "";
-    opt0.textContent = quizzes.length ? "Select a saved quiz…" : "No quizzes yet — click New Quiz";
+    opt0.textContent = quizzes.length
+      ? "Select a saved quiz…"
+      : "No quizzes yet — click New Quiz";
     quizSelect.appendChild(opt0);
 
-    quizzes.forEach(q => {
+    quizzes.forEach((q) => {
       const o = document.createElement("option");
       o.value = q.id;
-      o.textContent = q.title ? q.title : `Untitled (${q.id.slice(0,6)})`;
+      o.textContent = q.title ? q.title : `Untitled (${q.id.slice(0, 6)})`;
       quizSelect.appendChild(o);
     });
 
@@ -109,7 +127,6 @@ function initMaker() {
     choicesWrap.innerHTML = "";
     editingQuestionId = null;
     cancelEditBtn.style.display = "none";
-    // default 4 choices
     for (let i = 0; i < 4; i++) addChoice("");
   }
 
@@ -122,24 +139,18 @@ function initMaker() {
       <input class="input" placeholder="Choice text" value="${escapeHtml(value)}"/>
       <button class="btn danger" type="button" title="Remove choice">Remove</button>
     `;
-    const removeBtn = row.querySelector("button");
-    removeBtn.onclick = () => {
+
+    row.querySelector("button").onclick = () => {
       if (choicesWrap.children.length <= 2) {
         alert("Keep at least 2 choices.");
         return;
       }
       row.remove();
-      // ensure one correct is checked
       const radios = choicesWrap.querySelectorAll('input[type="radio"]');
-      if (![...radios].some(r => r.checked)) radios[0].checked = true;
+      if (![...radios].some((r) => r.checked)) radios[0].checked = true;
     };
-    choicesWrap.appendChild(row);
-  }
 
-  function escapeHtml(s) {
-    return (s ?? "").replace(/[&<>"']/g, c => ({
-      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
-    }[c]));
+    choicesWrap.appendChild(row);
   }
 
   function renderQuestions() {
@@ -154,11 +165,12 @@ function initMaker() {
     activeQuiz.questions.forEach((q, i) => {
       const item = document.createElement("div");
       item.className = "item";
+
       const correctText = q.choices[q.correctIndex] ?? "(missing)";
       item.innerHTML = `
         <div class="row tight" style="justify-content: space-between;">
           <div>
-            <div><strong>Q${i+1}.</strong> ${escapeHtml(q.text)}</div>
+            <div><strong>Q${i + 1}.</strong> ${escapeHtml(q.text)}</div>
             <div class="small muted">Correct: <span class="ok">${escapeHtml(correctText)}</span></div>
           </div>
           <div class="row tight" style="gap:8px;">
@@ -169,14 +181,15 @@ function initMaker() {
       `;
 
       const [editBtn, delBtn] = item.querySelectorAll("button");
+
       editBtn.onclick = () => startEditQuestion(q.id);
+
       delBtn.onclick = () => {
         if (!confirm("Delete this question?")) return;
-        activeQuiz.questions = activeQuiz.questions.filter(x => x.id !== q.id);
+        activeQuiz.questions = activeQuiz.questions.filter((x) => x.id !== q.id);
         saveQuiz(activeQuiz);
         renderQuestions();
         renderShare();
-        // if currently editing this one, cancel
         if (editingQuestionId === q.id) clearQuestionForm();
       };
 
@@ -185,8 +198,9 @@ function initMaker() {
   }
 
   function startEditQuestion(qid) {
-    const q = activeQuiz.questions.find(x => x.id === qid);
+    const q = activeQuiz.questions.find((x) => x.id === qid);
     if (!q) return;
+
     editingQuestionId = qid;
     cancelEditBtn.style.display = "inline-flex";
     qText.value = q.text;
@@ -200,16 +214,17 @@ function initMaker() {
         <input class="input" placeholder="Choice text" value="${escapeHtml(c)}"/>
         <button class="btn danger" type="button" title="Remove choice">Remove</button>
       `;
-      const removeBtn = row.querySelector("button");
-      removeBtn.onclick = () => {
+
+      row.querySelector("button").onclick = () => {
         if (choicesWrap.children.length <= 2) {
           alert("Keep at least 2 choices.");
           return;
         }
         row.remove();
         const radios = choicesWrap.querySelectorAll('input[type="radio"]');
-        if (![...radios].some(r => r.checked)) radios[0].checked = true;
+        if (![...radios].some((r) => r.checked)) radios[0].checked = true;
       };
+
       choicesWrap.appendChild(row);
     });
   }
@@ -219,13 +234,12 @@ function initMaker() {
     if (!text) throw new Error("Question text is required.");
 
     const rows = [...choicesWrap.children];
-    const choices = rows.map(r => r.querySelector('input.input').value.trim());
-    if (choices.some(c => !c)) throw new Error("All choices must have text.");
-    if (new Set(choices).size !== choices.length) {
-      if (!confirm("Some choices are duplicates. Continue?")) throw new Error("Fix duplicate choices.");
-    }
+    const choices = rows.map((r) => r.querySelector("input.input").value.trim());
+    if (choices.some((c) => !c)) throw new Error("All choices must have text.");
 
-    const correctIndex = rows.findIndex(r => r.querySelector('input[type="radio"]').checked);
+    const correctIndex = rows.findIndex((r) =>
+      r.querySelector('input[type="radio"]').checked
+    );
     if (correctIndex < 0) throw new Error("Select a correct answer.");
 
     return { text, choices, correctIndex };
@@ -238,12 +252,12 @@ function initMaker() {
     }
     shareBox.style.display = "block";
 
-    // share by embedding quiz data in URL (so others can take without your localStorage)
     const payload = {
       id: activeQuiz.id,
       title: activeQuiz.title,
       questions: activeQuiz.questions
     };
+
     const encoded = base64UrlEncode(JSON.stringify(payload));
     const url = new URL(window.location.href);
     url.pathname = url.pathname.replace(/maker\.html$/, "take.html");
@@ -252,9 +266,14 @@ function initMaker() {
     shareLinkEl.textContent = url.toString();
   }
 
-  // Events
   newQuizBtn.onclick = () => {
-    const q = { id: uid(), title: "Untitled Quiz", createdAt: Date.now(), updatedAt: Date.now(), questions: [] };
+    const q = {
+      id: uid(),
+      title: "Untitled Quiz",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      questions: []
+    };
     saveQuiz(q);
     refreshQuizDropdown(q.id);
     setActiveQuiz(q);
@@ -297,8 +316,9 @@ function initMaker() {
     }
     try {
       const data = collectQuestionForm();
+
       if (editingQuestionId) {
-        const q = activeQuiz.questions.find(x => x.id === editingQuestionId);
+        const q = activeQuiz.questions.find((x) => x.id === editingQuestionId);
         if (!q) throw new Error("Question not found.");
         q.text = data.text;
         q.choices = data.choices;
@@ -306,6 +326,7 @@ function initMaker() {
       } else {
         activeQuiz.questions.push({ id: uid(), ...data });
       }
+
       saveQuiz(activeQuiz);
       renderQuestions();
       renderShare();
@@ -318,6 +339,7 @@ function initMaker() {
   delQuizBtn.onclick = () => {
     if (!activeQuiz) return;
     if (!confirm("Delete this entire quiz?")) return;
+
     deleteQuiz(activeQuiz.id);
     activeQuiz = null;
     refreshQuizDropdown();
@@ -333,7 +355,7 @@ function initMaker() {
     try {
       await navigator.clipboard.writeText(shareLinkEl.textContent);
       copyShareBtn.textContent = "Copied!";
-      setTimeout(() => copyShareBtn.textContent = "Copy", 900);
+      setTimeout(() => (copyShareBtn.textContent = "Copy"), 900);
     } catch {
       alert("Copy failed. You can manually copy the link.");
     }
@@ -344,7 +366,6 @@ function initMaker() {
     window.location.href = `take.html?id=${encodeURIComponent(activeQuiz.id)}`;
   };
 
-  // Initial
   refreshQuizDropdown();
   delQuizBtn.disabled = true;
   openTakeBtn.disabled = true;
@@ -391,7 +412,6 @@ function initTake() {
       return;
     }
 
-    // fallback: show list
     quiz = null;
   }
 
@@ -418,10 +438,10 @@ function initTake() {
     formEl.appendChild(wrap);
 
     const picker = wrap.querySelector("#picker");
-    all.forEach(q => {
+    all.forEach((q) => {
       const o = document.createElement("option");
       o.value = q.id;
-      o.textContent = q.title || `Untitled (${q.id.slice(0,6)})`;
+      o.textContent = q.title || `Untitled (${q.id.slice(0, 6)})`;
       picker.appendChild(o);
     });
 
@@ -453,39 +473,38 @@ function initTake() {
     quiz.questions.forEach((q, idx) => {
       const card = document.createElement("div");
       card.className = "card";
-      const choicesHtml = q.choices.map((c, i) => `
-        <label class="choice">
-          <input type="radio" name="q_${q.id}" value="${i}" required />
-          <span>${escapeHtml(c)}</span>
-        </label>
-      `).join("");
+
+      const choicesHtml = q.choices
+        .map(
+          (c, i) => `
+          <label class="choice">
+            <input type="radio" name="q_${q.id}" value="${i}" required />
+            <span>${escapeHtml(c)}</span>
+          </label>
+        `
+        )
+        .join("");
 
       card.innerHTML = `
         <h2>Q${idx + 1}</h2>
         <div style="margin-bottom:10px;">${escapeHtml(q.text)}</div>
         <div>${choicesHtml}</div>
       `;
+
       formEl.appendChild(card);
     });
 
     submitBtn.style.display = "inline-flex";
   }
 
-  function escapeHtml(s) {
-    return (s ?? "").replace(/[&<>"']/g, c => ({
-      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
-    }[c]));
-  }
-
   function computeScore() {
     const answers = {};
     let correct = 0;
 
-    quiz.questions.forEach(q => {
+    quiz.questions.forEach((q) => {
       const picked = formEl.querySelector(`input[name="q_${q.id}"]:checked`);
       const pickedIndex = picked ? Number(picked.value) : null;
       answers[q.id] = pickedIndex;
-
       if (pickedIndex === q.correctIndex) correct++;
     });
 
@@ -498,14 +517,12 @@ function initTake() {
     };
   }
 
-  // Init
   loadQuiz();
   renderQuiz();
 
   submitBtn.onclick = () => {
     if (!quiz) return;
 
-    // Ensure required radios are filled
     const valid = formEl.checkValidity();
     if (!valid) {
       formEl.reportValidity();
@@ -518,7 +535,6 @@ function initTake() {
   };
 }
 
-// ---------- Results Page ----------
 // ---------- Results Page ----------
 function initResults() {
   const el = (id) => document.getElementById(id);
@@ -560,28 +576,27 @@ function initResults() {
       ? `<span class="pill correctPill">✅ Correct</span>`
       : `<span class="pill wrongPill">❌ Wrong</span>`;
 
-    const choicesHtml = q.choices.map((c, i) => {
-      const isCorrect = i === q.correctIndex;
-      const isPicked = picked === i;
+    const choicesHtml = q.choices
+      .map((c, i) => {
+        let cls = "choiceRow";
+        let mark = "⬜";
 
-      let cls = "choiceRow";
-      let mark = "⬜";
+        if (i === q.correctIndex) {
+          cls += " correct";
+          mark = "✅";
+        } else if (picked === i) {
+          cls += " pickedWrong";
+          mark = "❌";
+        }
 
-      if (isCorrect) {
-        cls += " correct";
-        mark = "✅";
-      } else if (isPicked) {
-        cls += " pickedWrong";
-        mark = "❌";
-      }
-
-      return `
-        <div class="${cls}">
-          <div class="choiceMark">${mark}</div>
-          <div class="choiceText">${escapeHtml(c)}</div>
-        </div>
-      `;
-    }).join("");
+        return `
+          <div class="${cls}">
+            <div class="choiceMark">${mark}</div>
+            <div class="choiceText">${escapeHtml(c)}</div>
+          </div>
+        `;
+      })
+      .join("");
 
     item.innerHTML = `
       <div class="row tight" style="justify-content: space-between; gap:10px; align-items:flex-start;">
@@ -604,18 +619,7 @@ function initResults() {
   againBtn.onclick = () => {
     window.location.href = "take.html";
   };
-
-  function escapeHtml(s) {
-    return (s ?? "").replace(/[&<>"']/g, c => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    }[c]));
-  }
 }
-
 
 // ---------- Boot ----------
 document.addEventListener("DOMContentLoaded", () => {
@@ -631,18 +635,16 @@ document.addEventListener("DOMContentLoaded", () => {
 (function () {
   const savedTheme = localStorage.getItem("quiz_theme");
   if (savedTheme) {
-    document.body.dataset.theme = savedTheme;
+    document.body.dataset.theme = savedTheme === "light" ? "light" : "";
   }
 
   document.addEventListener("click", function (e) {
     if (e.target && e.target.id === "themeToggle") {
-      const current = document.body.dataset.theme === "light" ? "dark" : "light";
-      document.body.dataset.theme = current === "light" ? "light" : "";
-      localStorage.setItem("quiz_theme", current === "light" ? "light" : "");
+      const isLight = document.body.dataset.theme === "light";
+      const next = isLight ? "dark" : "light";
+
+      document.body.dataset.theme = next === "light" ? "light" : "";
+      localStorage.setItem("quiz_theme", next);
     }
   });
 })();
-
-
-
-
