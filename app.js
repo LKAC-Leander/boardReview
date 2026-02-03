@@ -519,6 +519,7 @@ function initTake() {
 }
 
 // ---------- Results Page ----------
+// ---------- Results Page ----------
 function initResults() {
   const el = (id) => document.getElementById(id);
   const titleEl = el("resTitle");
@@ -526,135 +527,95 @@ function initResults() {
   const reviewEl = el("reviewList");
   const againBtn = el("againBtn");
 
-  // visible debug area (so you don't need console)
-  const debug = document.createElement("div");
-  debug.className = "muted small";
-  debug.style.marginTop = "8px";
-  scoreEl.appendChild(debug);
-
-  function escapeHtml(s) {
-    return (s ?? "").replace(/[&<>"']/g, c => ({
-      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
-    }[c]));
+  const raw = sessionStorage.getItem("lastResult");
+  if (!raw) {
+    titleEl.textContent = "No results found";
+    scoreEl.innerHTML = `<span class="muted">Take a quiz first.</span>`;
+    reviewEl.innerHTML = "";
+    againBtn.style.display = "none";
+    return;
   }
 
-  try {
-    const raw = sessionStorage.getItem("lastResult");
+  const result = JSON.parse(raw);
+  titleEl.textContent = result.quizTitle || "Results";
 
-    debug.innerHTML = `Debug: lastResult is <strong>${raw ? "FOUND" : "MISSING"}</strong>`;
+  const percent = Math.round((result.correct / result.total) * 100);
+  scoreEl.innerHTML = `
+    <div class="row tight" style="gap:10px; flex-wrap:wrap;">
+      <span class="badge">Score: <strong>${result.correct}/${result.total}</strong></span>
+      <span class="badge">Percent: <strong>${percent}%</strong></span>
+    </div>
+  `;
 
-    if (!raw) {
-      titleEl.textContent = "No results found";
-      scoreEl.innerHTML = `
-        <div class="muted">
-          No saved quiz attempt detected.
-          <div class="small muted" style="margin-top:6px;">
-            Go to <strong>Take Quiz</strong>, answer a quiz, then press <strong>Submit</strong>.
-          </div>
+  reviewEl.innerHTML = "";
+
+  result.questions.forEach((q, idx) => {
+    const picked = result.answers ? result.answers[q.id] : null;
+    const ok = picked === q.correctIndex;
+
+    const item = document.createElement("div");
+    item.className = `item reviewItem ${ok ? "correct" : "wrong"}`;
+
+    const statusPill = ok
+      ? `<span class="pill correctPill">✅ Correct</span>`
+      : `<span class="pill wrongPill">❌ Wrong</span>`;
+
+    const choicesHtml = q.choices.map((c, i) => {
+      const isCorrect = i === q.correctIndex;
+      const isPicked = picked === i;
+
+      let cls = "choiceRow";
+      let mark = "⬜";
+
+      if (isCorrect) {
+        cls += " correct";
+        mark = "✅";
+      } else if (isPicked) {
+        cls += " pickedWrong";
+        mark = "❌";
+      }
+
+      return `
+        <div class="${cls}">
+          <div class="choiceMark">${mark}</div>
+          <div class="choiceText">${escapeHtml(c)}</div>
         </div>
       `;
-      reviewEl.innerHTML = "";
-      againBtn.textContent = "Go to Take Quiz";
-      againBtn.style.display = "inline-flex";
-      againBtn.onclick = () => window.location.href = "take.html";
-      return;
-    }
+    }).join("");
 
-    const result = JSON.parse(raw);
-
-    debug.innerHTML += ` • questions: <strong>${(result.questions && result.questions.length) || 0}</strong>`;
-
-    titleEl.textContent = result.quizTitle || "Results";
-
-    const percent = Math.round((result.correct / result.total) * 100);
-    scoreEl.innerHTML = `
-      <div class="row tight" style="gap:10px; flex-wrap:wrap;">
-        <span class="badge">Score: <strong>${result.correct}/${result.total}</strong></span>
-        <span class="badge">Percent: <strong>${percent}%</strong></span>
+    item.innerHTML = `
+      <div class="row tight" style="justify-content: space-between; gap:10px; align-items:flex-start;">
+        <div style="flex:1;">
+          <div><strong>Q${idx + 1}.</strong> ${escapeHtml(q.text)}</div>
+        </div>
+        <div class="row tight" style="gap:8px;">
+          ${statusPill}
+        </div>
       </div>
-      <div class="muted small" style="margin-top:8px;">
-        Debug: lastResult FOUND • questions: <strong>${result.questions.length}</strong>
+
+      <div class="choiceList">
+        ${choicesHtml}
       </div>
     `;
 
-    reviewEl.innerHTML = "";
+    reviewEl.appendChild(item);
+  });
 
-    result.questions.forEach((q, idx) => {
-      const picked = result.answers ? result.answers[q.id] : null;
-      const ok = picked === q.correctIndex;
-
-      const item = document.createElement("div");
-      item.className = `item reviewItem ${ok ? "correct" : "wrong"}`;
-
-      const statusPill = ok
-        ? `<span class="pill correctPill">✅ Correct</span>`
-        : `<span class="pill wrongPill">❌ Wrong</span>`;
-
-      const choicesHtml = (q.choices || []).map((c, i) => {
-        const isCorrect = i === q.correctIndex;
-        const isPicked = picked === i;
-
-        let cls = "choiceRow";
-        let mark = "⬜";
-
-        // ✅ Always show correct answer with check
-        if (isCorrect) {
-          cls += " correct";
-          mark = "✅";
-        }
-        // ❌ If user picked wrong, mark that choice
-        else if (isPicked) {
-          cls += " pickedWrong";
-          mark = "❌";
-        }
-
-        return `
-          <div class="${cls}">
-            <div class="choiceMark">${mark}</div>
-            <div class="choiceText">${escapeHtml(c)}</div>
-          </div>
-        `;
-      }).join("");
-
-      item.innerHTML = `
-        <div class="row tight" style="justify-content: space-between; gap:10px; align-items:flex-start;">
-          <div style="flex:1;">
-            <div><strong>Q${idx + 1}.</strong> ${escapeHtml(q.text)}</div>
-          </div>
-          <div class="row tight" style="gap:8px;">
-            ${statusPill}
-          </div>
-        </div>
-
-        <div class="choiceList">
-          ${choicesHtml}
-        </div>
-      `;
-
-      reviewEl.appendChild(item);
-    });
-
-    againBtn.onclick = () => window.location.href = "take.html";
-  } catch (err) {
-    titleEl.textContent = "Results error";
-    scoreEl.innerHTML = `
-      <div class="dangerText">
-        Something broke while rendering results.
-      </div>
-      <pre class="small" style="white-space:pre-wrap; margin-top:10px;">${escapeHtml(String(err))}</pre>
-    `;
-    reviewEl.innerHTML = "";
-    againBtn.textContent = "Back to Take Quiz";
-    againBtn.onclick = () => window.location.href = "take.html";
-  }
-}
+  againBtn.onclick = () => {
+    window.location.href = "take.html";
+  };
 
   function escapeHtml(s) {
     return (s ?? "").replace(/[&<>"']/g, c => ({
-      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
     }[c]));
   }
 }
+
 
 // ---------- Boot ----------
 document.addEventListener("DOMContentLoaded", () => {
@@ -681,8 +642,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
-
-
 
 
 
