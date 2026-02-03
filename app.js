@@ -541,7 +541,7 @@ function initTake() {
 }
 
 // ---------- Results Page ----------
-asyncg function initResults() {
+asynch function initResults() {
   const el = (id) => document.getElementById(id);
   const titleEl = el("resTitle");
   const scoreEl = el("scoreLine");
