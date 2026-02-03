@@ -561,29 +561,30 @@ function initResults() {
       : `<span class="pill wrongPill">❌ Wrong</span>`;
 
     
-      const choicesHtml = q.choices.map((c, i) => {
-        const isCorrect = i === q.correctIndex;
-        const isPicked = picked === i;
-      
-        let cls = "choiceRow";
-        let mark = "☐";
-      
-        if (isCorrect) {
-          cls += " correct";
-          mark = "✅";
-        } 
-        else if (isPicked && !isCorrect) {
-          cls += " pickedWrong";
-          mark = "❌";
-        }
-      
-        return `
-          <div class="${cls}">
-            <div class="choiceMark">${mark}</div>
-            <div class="choiceText">${escapeHtml(c)}</div>
-          </div>
-        `;
-      }).join("");
+    const choicesHtml = q.choices.map((c, i) => {
+      const isCorrect = i === q.correctIndex;
+      const isPicked = picked === i;
+    
+      let cls = "choiceRow";
+      let mark = "⬜";
+    
+      if (isCorrect) {
+        cls += " correct";
+        mark = "✅";
+      } 
+      else if (isPicked && !isCorrect) {
+        cls += " pickedWrong";
+        mark = "❌";
+      }
+    
+      return `
+        <div class="${cls}">
+          <div class="choiceMark">${mark}</div>
+          <div class="choiceText">${escapeHtml(c)}</div>
+        </div>
+      `;
+    }).join("");
+
     
     item.innerHTML = `
       <div class="row tight" style="justify-content: space-between; gap:10px; align-items:flex-start;">
@@ -640,6 +641,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
+
 
 
 
