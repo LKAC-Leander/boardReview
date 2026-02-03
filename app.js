@@ -585,3 +585,21 @@ document.addEventListener("DOMContentLoaded", () => {
   if (page === "take") initTake();
   if (page === "results") initResults();
 });
+
+// =========================
+// THEME TOGGLE
+// =========================
+(function () {
+  const savedTheme = localStorage.getItem("quiz_theme");
+  if (savedTheme) {
+    document.body.dataset.theme = savedTheme;
+  }
+
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "themeToggle") {
+      const current = document.body.dataset.theme === "light" ? "dark" : "light";
+      document.body.dataset.theme = current === "light" ? "light" : "";
+      localStorage.setItem("quiz_theme", current === "light" ? "light" : "");
+    }
+  });
+})();
