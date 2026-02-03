@@ -221,40 +221,40 @@ textarea { min-height: 90px; resize: vertical; }
 .small { font-size: 12px; }
 
 /* =========================
-   DARK MODE dropdown fixes
+   DARK THEME DROPDOWN FIX
    ========================= */
 
-/* Tell the browser we are using a dark UI so form controls follow it */
+/* Tell browser this page uses dark UI */
 body:not([data-theme="light"]) {
   color-scheme: dark;
 }
 
-/* Ensure selects are readable in dark mode */
-body:not([data-theme="light"]) select,
-body:not([data-theme="light"]) option {
-  background-color: #101827 !important; /* darker than bg */
-  color: #e8edf7 !important;
-}
-
-/* Optional: make the dropdown border slightly clearer */
+/* Closed select field */
 body:not([data-theme="light"]) select {
-  border-color: rgba(255,255,255,0.18) !important;
+  background-color: rgba(255, 255, 255, 0.09);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
-/* Placeholder-ish state (disabled/select default option) */
-body:not([data-theme="light"]) select:disabled {
-  opacity: 0.75;
-  cursor: not-allowed;
+/* Open dropdown list (options) */
+body:not([data-theme="light"]) select option,
+body:not([data-theme="light"]) select optgroup {
+  background-color: #111a2e;   /* darker than card, lighter than bg */
+  color: #e8edf7;
 }
 
-/* Better focus ring for dark mode */
-body:not([data-theme="light"]) select:focus,
-body:not([data-theme="light"]) .input:focus,
-body:not([data-theme="light"]) textarea:focus {
+/* Hovered / selected option (supported browsers) */
+body:not([data-theme="light"]) select option:checked,
+body:not([data-theme="light"]) select option:hover {
+  background-color: rgba(110, 168, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Focus outline for accessibility */
+body:not([data-theme="light"]) select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(110,168,255,0.25);
-  border-color: rgba(110,168,255,0.55);
+  box-shadow: 0 0 0 3px rgba(110, 168, 255, 0.25);
+  border-color: rgba(110, 168, 255, 0.6);
 }
-
 
 
