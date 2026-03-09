@@ -34,6 +34,24 @@ function normalizeWhitespace(str) {
     .trim();
 }
 
+function cleanPageArtifacts(str) {
+  return (str ?? "")
+    .replace(/BLEPP TEST BANK 2025\s*[–-]\s*KID ASUNCION/gi, "")
+    .replace(/\b\d+\s*\|\s*P\s*a\s*g\s*e\b/gi, "")
+    .replace(/\b\d+\s*\|\s*Page\b/gi, "")
+    .trim();
+}
+
+function normalizeForCompare(str) {
+  return cleanPageArtifacts(str)
+    .toLowerCase()
+    .replace(/[“”"']/g, "")
+    .replace(/[–—-]/g, "-")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 // ---------- Firestore ----------
 async function loadAllQuizzes() {
   const snap = await getDocs(collection(db, QUIZ_COLLECTION));
@@ -62,18 +80,18 @@ async function deleteQuizById(id) {
 
 // ---------- Parsing ----------
 function parseQuestionBlock(raw) {
-  const text = normalizeWhitespace(raw);
+  const text = cleanPageArtifacts(normalizeWhitespace(raw));
 
-  // Match each numbered question block
-  const questionRegex = /(?:^|\n)(\d+)\.\s*(.*?)(?=(?:\n\d+\.\s)|$)/gs;
+  // supports "1." or "Q1."
+  const questionRegex = /(?:^|\n)Q?(\d+)\.\s*(.*?)(?=(?:\nQ?\d+\.\s)|$)/gs;
   const questions = [];
   let match;
 
   while ((match = questionRegex.exec(text)) !== null) {
     const number = Number(match[1]);
-    let block = match[2].trim();
+    const block = match[2].trim();
 
-    // Skip blocks without choices
+    // must contain at least one choice line like a) or A)
     if (!/\n[a-zA-Z]\)\s*/.test(block)) continue;
 
     const firstChoiceIndex = block.search(/\n[a-zA-Z]\)\s*/);
@@ -82,17 +100,22 @@ function parseQuestionBlock(raw) {
     let stem = block.slice(0, firstChoiceIndex).trim();
     const choicesPart = block.slice(firstChoiceIndex).trim();
 
-    // Clean question stem
-    stem = stem.replace(/\s+/g, " ").trim();
+    stem = cleanPageArtifacts(stem).replace(/\s+/g, " ").trim();
 
-    // Supports a), b), c), d), e) ... z)
+    // supports a) ... z)
     const choiceRegex = /([a-zA-Z])\)\s*(.*?)(?=(?:\n[a-zA-Z]\)\s*)|$)/gs;
     const choices = [];
     let cMatch;
 
     while ((cMatch = choiceRegex.exec(choicesPart)) !== null) {
-      const choiceText = cMatch[2].replace(/\s+/g, " ").trim();
-      if (choiceText) choices.push(choiceText);
+      const letter = cMatch[1].toUpperCase();
+      const choiceText = cleanPageArtifacts(cMatch[2]).replace(/\s+/g, " ").trim();
+      if (choiceText) {
+        choices.push({
+          letter,
+          text: choiceText
+        });
+      }
     }
 
     if (choices.length >= 2) {
@@ -108,25 +131,44 @@ function parseQuestionBlock(raw) {
 }
 
 function parseAnswerKeyBlock(raw) {
-  const text = normalizeWhitespace(raw);
-
-  // Matches:
-  // 1. The answer is D. ...
-  // 37. The answer is E. ...
-  const answerRegex =
-    /(?:^|\n)(\d+)\.\s*The answer is\s+([A-Z])\.\s*(.*?)(?=(?:\n\d+\.\s*The answer is\s+[A-Z]\.)|$)/gis;
-
+  const text = cleanPageArtifacts(normalizeWhitespace(raw));
   const answers = new Map();
-  let match;
 
-  while ((match = answerRegex.exec(text)) !== null) {
-    const number = Number(match[1]);
-    const letter = match[2].toUpperCase();
-    const feedback = match[3].replace(/\s+/g, " ").trim();
+  // Format 1: "37. The answer is E. feedback..."
+  const regex1 =
+    /(?:^|\n)Q?(\d+)\.\s*The answer is\s+([A-Z])\.\s*(.*?)(?=(?:\nQ?\d+\.\s*The answer is\s+[A-Z]\.)|$)/gis;
+
+  let m1;
+  while ((m1 = regex1.exec(text)) !== null) {
+    const number = Number(m1[1]);
+    const letter = m1[2].toUpperCase();
+    const feedback = cleanPageArtifacts(m1[3]).replace(/\s+/g, " ").trim();
 
     answers.set(number, {
+      mode: "letter",
       correctLetter: letter,
-      correctIndex: letter.charCodeAt(0) - 65, // A=0, B=1, ...
+      correctText: "",
+      feedback
+    });
+  }
+
+  // Format 2:
+  // Q37. ...
+  // Correct: Something
+  // Feedback: Something
+  const regex2 =
+    /(?:^|\n)Q?(\d+)\.\s*(.*?)(?:\n|\r\n)Correct:\s*(.*?)(?:\n|\r\n)Feedback:\s*(.*?)(?=(?:\nQ?\d+\.\s)|$)/gis;
+
+  let m2;
+  while ((m2 = regex2.exec(text)) !== null) {
+    const number = Number(m2[1]);
+    const correctText = cleanPageArtifacts(m2[3]).replace(/\s+/g, " ").trim();
+    const feedback = cleanPageArtifacts(m2[4]).replace(/\s+/g, " ").trim();
+
+    answers.set(number, {
+      mode: "text",
+      correctLetter: "",
+      correctText,
       feedback
     });
   }
@@ -134,19 +176,53 @@ function parseAnswerKeyBlock(raw) {
   return answers;
 }
 
+function resolveCorrectIndex(question, answer) {
+  if (!question || !answer) return -1;
+
+  if (answer.mode === "letter" && answer.correctLetter) {
+    const idx = question.choices.findIndex(
+      (c) => c.letter.toUpperCase() === answer.correctLetter.toUpperCase()
+    );
+    return idx;
+  }
+
+  if (answer.mode === "text" && answer.correctText) {
+    const target = normalizeForCompare(answer.correctText);
+
+    // exact normalized text match
+    let idx = question.choices.findIndex(
+      (c) => normalizeForCompare(c.text) === target
+    );
+    if (idx !== -1) return idx;
+
+    // contains fallback
+    idx = question.choices.findIndex((c) => {
+      const norm = normalizeForCompare(c.text);
+      return norm.includes(target) || target.includes(norm);
+    });
+    return idx;
+  }
+
+  return -1;
+}
+
 function mergeBulkData(questionList, answerMap) {
   const merged = [];
+  const skipped = [];
 
   for (const q of questionList) {
     const ans = answerMap.get(q.number);
+
     if (!ans) {
-      console.warn(`Skipped Q${q.number}: no answer key found.`);
+      skipped.push(`Q${q.number}: no matching answer key found`);
       continue;
     }
 
-    if (ans.correctIndex < 0 || ans.correctIndex >= q.choices.length) {
-      console.warn(
-        `Skipped Q${q.number}: answer ${ans.correctLetter} does not match ${q.choices.length} choices.`
+    const correctIndex = resolveCorrectIndex(q, ans);
+
+    if (correctIndex < 0 || correctIndex >= q.choices.length) {
+      skipped.push(
+        `Q${q.number}: could not match correct answer to ${q.choices.length} choices`
       );
       continue;
     }
@@ -154,13 +230,13 @@ function mergeBulkData(questionList, answerMap) {
     merged.push({
       id: uid(),
       text: q.text,
-      choices: q.choices,
-      correctIndex: ans.correctIndex,
+      choices: q.choices.map((c) => c.text),
+      correctIndex,
       feedback: ans.feedback || ""
     });
   }
 
-  return merged;
+  return { merged, skipped };
 }
 
 // ---------- Page ----------
@@ -181,6 +257,16 @@ async function initBulkMaker() {
   const importPreview = el("importPreview");
 
   let activeQuiz = null;
+
+  // create skip report area if not present
+  let skipReport = document.getElementById("skipReport");
+  if (!skipReport) {
+    skipReport = document.createElement("div");
+    skipReport.id = "skipReport";
+    skipReport.className = "card";
+    skipReport.style.marginTop = "14px";
+    importPreview.parentElement.insertAdjacentElement("afterend", skipReport);
+  }
 
   async function refreshQuizDropdown(activeId = null) {
     const quizzes = await loadAllQuizzes();
@@ -219,6 +305,9 @@ async function initBulkMaker() {
       item.innerHTML = `
         <div><strong>Q${i + 1}.</strong> ${escapeHtml(q.text)}</div>
         <div class="small muted" style="margin-top:6px;">
+          Choices: ${q.choices.length}
+        </div>
+        <div class="small muted" style="margin-top:6px;">
           Correct: <span class="ok">${escapeHtml(correctText)}</span>
         </div>
         ${
@@ -232,6 +321,26 @@ async function initBulkMaker() {
 
       importPreview.appendChild(item);
     });
+  }
+
+  function renderSkipReport(skipped) {
+    if (!skipped.length) {
+      skipReport.innerHTML = `
+        <h2>Import Report</h2>
+        <div class="ok">No skipped questions.</div>
+      `;
+      return;
+    }
+
+    skipReport.innerHTML = `
+      <h2>Import Report</h2>
+      <div class="dangerText" style="margin-bottom:10px;">
+        ${skipped.length} question(s) were skipped.
+      </div>
+      <div class="list">
+        ${skipped.map((s) => `<div class="item small">${escapeHtml(s)}</div>`).join("")}
+      </div>
+    `;
   }
 
   function setActiveQuiz(quiz) {
@@ -252,6 +361,7 @@ async function initBulkMaker() {
     await saveQuiz(q);
     await refreshQuizDropdown(q.id);
     setActiveQuiz(q);
+    renderSkipReport([]);
   };
 
   quizSelect.onchange = async () => {
@@ -260,12 +370,14 @@ async function initBulkMaker() {
       activeQuiz = null;
       quizTitle.value = "";
       renderPreview();
+      renderSkipReport([]);
       return;
     }
 
     const q = await loadQuizById(id);
     if (!q) return;
     setActiveQuiz(q);
+    renderSkipReport([]);
   };
 
   saveQuizTitleBtn.onclick = async () => {
@@ -293,6 +405,7 @@ async function initBulkMaker() {
     quizTitle.value = "";
     await refreshQuizDropdown();
     renderPreview();
+    renderSkipReport([]);
     alert("Quiz deleted.");
   };
 
@@ -313,20 +426,22 @@ async function initBulkMaker() {
     try {
       const parsedQuestions = parseQuestionBlock(qRaw);
       const parsedAnswers = parseAnswerKeyBlock(aRaw);
-      const mergedQuestions = mergeBulkData(parsedQuestions, parsedAnswers);
+      const { merged, skipped } = mergeBulkData(parsedQuestions, parsedAnswers);
 
-      if (!mergedQuestions.length) {
-        alert("No questions were imported. Check the formatting and answer keys.");
+      renderSkipReport(skipped);
+
+      if (!merged.length) {
+        alert("No questions were imported. Check the Import Report below.");
         return;
       }
 
       activeQuiz.questions = activeQuiz.questions || [];
-      activeQuiz.questions.push(...mergedQuestions);
+      activeQuiz.questions.push(...merged);
 
       await saveQuiz(activeQuiz);
       renderPreview();
 
-      alert(`Imported ${mergedQuestions.length} questions successfully.`);
+      alert(`Imported ${merged.length} questions successfully.`);
     } catch (err) {
       console.error(err);
       alert("Import failed. Check the console for details.");
@@ -336,10 +451,12 @@ async function initBulkMaker() {
   bulkClearBtn.onclick = () => {
     bulkQuestions.value = "";
     bulkAnswers.value = "";
+    renderSkipReport([]);
   };
 
   await refreshQuizDropdown();
   renderPreview();
+  renderSkipReport([]);
 }
 
 // ---------- Theme Toggle ----------
