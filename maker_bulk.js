@@ -73,19 +73,20 @@ function parseQuestionBlock(raw) {
     const number = Number(match[1]);
     let block = match[2].trim();
 
-    // ignore section headers or noise that have no a) / b) / c)
-    if (!/\n[a-d]\)\s*/i.test(block)) continue;
+    // Skip blocks without choices
+    if (!/\n[a-zA-Z]\)\s*/.test(block)) continue;
 
-    const firstChoiceIndex = block.search(/\n[a-d]\)\s*/i);
+    const firstChoiceIndex = block.search(/\n[a-zA-Z]\)\s*/);
     if (firstChoiceIndex === -1) continue;
 
     let stem = block.slice(0, firstChoiceIndex).trim();
     const choicesPart = block.slice(firstChoiceIndex).trim();
 
-    // remove extra numbering only; keep cognitive tags like (Remembering)
+    // Clean question stem
     stem = stem.replace(/\s+/g, " ").trim();
 
-    const choiceRegex = /([a-d])\)\s*(.*?)(?=(?:\n[a-d]\)\s*)|$)/gis;
+    // Supports a), b), c), d), e) ... z)
+    const choiceRegex = /([a-zA-Z])\)\s*(.*?)(?=(?:\n[a-zA-Z]\)\s*)|$)/gs;
     const choices = [];
     let cMatch;
 
@@ -109,9 +110,11 @@ function parseQuestionBlock(raw) {
 function parseAnswerKeyBlock(raw) {
   const text = normalizeWhitespace(raw);
 
-  // Matches "1. The answer is D. feedback..."
+  // Matches:
+  // 1. The answer is D. ...
+  // 37. The answer is E. ...
   const answerRegex =
-    /(?:^|\n)(\d+)\.\s*The answer is\s+([A-D])\.\s*(.*?)(?=(?:\n\d+\.\s*The answer is\s+[A-D]\.)|$)/gis;
+    /(?:^|\n)(\d+)\.\s*The answer is\s+([A-Z])\.\s*(.*?)(?=(?:\n\d+\.\s*The answer is\s+[A-Z]\.)|$)/gis;
 
   const answers = new Map();
   let match;
@@ -122,7 +125,8 @@ function parseAnswerKeyBlock(raw) {
     const feedback = match[3].replace(/\s+/g, " ").trim();
 
     answers.set(number, {
-      correctIndex: letter.charCodeAt(0) - 65,
+      correctLetter: letter,
+      correctIndex: letter.charCodeAt(0) - 65, // A=0, B=1, ...
       feedback
     });
   }
@@ -135,8 +139,17 @@ function mergeBulkData(questionList, answerMap) {
 
   for (const q of questionList) {
     const ans = answerMap.get(q.number);
-    if (!ans) continue;
-    if (ans.correctIndex < 0 || ans.correctIndex >= q.choices.length) continue;
+    if (!ans) {
+      console.warn(`Skipped Q${q.number}: no answer key found.`);
+      continue;
+    }
+
+    if (ans.correctIndex < 0 || ans.correctIndex >= q.choices.length) {
+      console.warn(
+        `Skipped Q${q.number}: answer ${ans.correctLetter} does not match ${q.choices.length} choices.`
+      );
+      continue;
+    }
 
     merged.push({
       id: uid(),
@@ -303,7 +316,7 @@ async function initBulkMaker() {
       const mergedQuestions = mergeBulkData(parsedQuestions, parsedAnswers);
 
       if (!mergedQuestions.length) {
-        alert("No questions were imported. Check the formatting.");
+        alert("No questions were imported. Check the formatting and answer keys.");
         return;
       }
 
