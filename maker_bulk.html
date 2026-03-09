@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bulk Quiz Import</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="maker-bulk">
+  <div class="container">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <h1>Bulk Quiz Import</h1>
+      </div>
+      <div class="nav">
+        <button class="btn" id="themeToggle" type="button">🌙 / ☀️</button>
+        <a class="btn" href="index.html">Home</a>
+        <a class="btn" href="maker.html">Quiz Maker</a>
+        <a class="btn" href="take.html">Take Quiz</a>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h2>Select or Create Quiz</h2>
+      <div class="row">
+        <select id="quizSelect" class="input"></select>
+        <button id="newQuizBtn" class="btn primary" type="button">New Quiz</button>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label class="small muted">Quiz Title</label>
+        <input id="quizTitle" class="input" placeholder="e.g., Abnormal Psychology Final Coaching" />
+      </div>
+
+      <div class="row tight" style="gap:10px; margin-top:12px;">
+        <button id="saveQuizTitleBtn" class="btn" type="button">Save Title</button>
+        <button id="deleteQuizBtn" class="btn danger" type="button">Delete Quiz</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <h2>Bulk Import</h2>
+      <div class="muted small" style="margin-bottom:10px;">
+        Paste the full questions block on the left and the full answer key / feedback block on the right.
+      </div>
+
+      <div class="row">
+        <div>
+          <label class="small muted">Questions Block</label>
+          <textarea
+            id="bulkQuestions"
+            class="input"
+            style="min-height:320px;"
+            placeholder="Paste the numbered questions and choices here..."
+          ></textarea>
+        </div>
+        <div>
+          <label class="small muted">Answer Key + Feedback Block</label>
+          <textarea
+            id="bulkAnswers"
+            class="input"
+            style="min-height:320px;"
+            placeholder="Paste the numbered answer key and feedback here..."
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="row tight" style="gap:10px; margin-top:12px;">
+        <button id="bulkImportBtn" class="btn primary" type="button">Import Questions</button>
+        <button id="bulkClearBtn" class="btn" type="button">Clear Text</button>
+      </div>
+
+      <div class="muted small" style="margin-top:10px;">
+        The importer removes question numbers like <strong>1.</strong>, matches answers by number, and saves the feedback into each question.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Imported Questions Preview</h2>
+      <div id="importPreview" class="list"></div>
+    </div>
+  </div>
+
+  <script type="module" src="maker_bulk.js"></script>
+</body>
+</html>
